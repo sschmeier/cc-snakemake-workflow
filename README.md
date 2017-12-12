@@ -1,5 +1,5 @@
 # cookie-snakemake-workflow
-A Snakemake workflow template
+A Snakemake workflow template.
 
 - [Features](#features)
 - [Requirements](#requirements)

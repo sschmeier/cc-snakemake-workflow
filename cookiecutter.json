@@ -6,6 +6,8 @@
   "repository_slug": "cookie-snakemake-workflow-example",
   "repository_description": "An example cookie-snakemake-workflow project template",
   "package_name": "example_package",
+  "date": "2017",
+  "version": "0.0.1",
   "create_remote": ["yes", "no"],
   "remote_provider": ["github.com", "gitlab.com", "bitbucket.org"],
   "gitignore": "git",

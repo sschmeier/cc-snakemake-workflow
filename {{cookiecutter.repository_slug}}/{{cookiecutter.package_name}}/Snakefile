@@ -1,0 +1,176 @@
+## Workflow project: {{cookiecutter.package_name}} 
+import glob, os, os.path, datetime
+from snakemake.utils import report
+
+## LOAD VARIABLES FROM CONFIGFILE ----------
+configfile: "config.yml"
+
+BASEDIR = config["basedir"]
+SAMPLEDIR = config["sampledir"]
+MAPPINGDIR = config["mappingdir"]
+SORTDIR = config["sortdir"]
+VARDIR = config["vardir"]
+LOGDIR = config["logdir"]
+BENCHMARKDIR = config["benchmarkdir"]
+WRAPPERDIR = config["wrapperdir"]
+SCRIPTDIR = config["scriptdir"]
+GENOME = config["genome"]
+##------------------------------------------
+
+## INPUT SAMPLE FILES
+SAMPLEFILES = glob.glob(os.path.join(SAMPLEDIR,'*'))
+## sample basenames
+SAMPLES, = glob_wildcards(os.path.join(SAMPLEDIR, '{sample,.+}.fastq'))
+
+## TARGETS
+## bam targets for samples
+#MAPTARGETS = expand('{dir}/{sample}.bam', sample=SAMPLES, dir=MAPPINGDIR)
+#SORTT = expand("{dir}/{sample}.sorted.bam.bai", dir=SORTDIR, sample=SAMPLES)
+VARCALLTARGETS = expand('{dir}/{sample}.vcf', sample=SAMPLES, dir=VARDIR)
+
+
+## Pseudo-rule to stae the final targets, so that the whole
+## workflow is run.
+rule all:
+     input:
+        "analyses/results/report.html"
+        
+
+## 1. MAPPING
+rule bwa_mem:
+    input:
+        os.path.join(SAMPLEDIR, "{sample}.fastq")
+    output:
+        temp(os.path.join(MAPPINGDIR, "{sample}.bam"))
+    log:
+        os.path.join(LOGDIR, "bwa_map/{sample}.log")
+    benchmark:
+        os.path.join(BENCHMARKDIR,"{sample}.bwa.txt")
+    params:
+        index=GENOME,
+        extra=r"-R '@RG\tID:{sample}\tSM:{sample}'",
+        sort="samtools",         ## Can be 'none', 'samtools' or 'picard'.
+        sort_order="queryname",  ## Can be 'queryname' or 'coordinate'.
+        sort_extra=""            ## Extra args for samtools/picard.
+    threads: 8
+    conda:
+        "envs/bwa-samtools.yaml"
+    ## When using a wrapper, specify dir with wrapper.py here 
+    #wrapper:
+    #    "file://%s/bwa" $(WRAPPERDIR)
+    ## When not using wrapper give commmand explicitly
+    shell:
+         "bwa mem -t {threads} {params.extra} {params.index} {input} | samtools view -Sb - > {output} 2> {log}"
+
+
+## 2. sorting
+rule samtools_sort:
+    input:
+        os.path.join(MAPPINGDIR, "{sample}.bam")
+    output:
+        os.path.join(SORTDIR, "{sample}.sorted.bam")
+    log:
+        os.path.join(LOGDIR, "samtools/{sample}.sort.log")
+    params:
+        "-m 4G"
+    threads: 8
+    conda:
+        "envs/bwa-samtools.yaml"
+    #wrapper:
+    #    "file://wrapper/samtools_sort"
+    shell:
+        "samtools sort {params} -@ {threads} -o {output[0]} -T %s/{wildcards.sample} {input[0]}" %(SORTDIR)
+        
+
+
+## 3. INDEXING
+rule samtools_index:
+    input:
+        os.path.join(SORTDIR, "{sample}.sorted.bam")
+    output:
+        os.path.join(SORTDIR, "{sample}.sorted.bam.bai")
+    log:
+        os.path.join(LOGDIR, "samtools/{sample}.index.log")
+    params:
+        ""
+    conda:
+        "envs/bwa-samtools.yaml"
+    #wrapper:
+    #    "file://wrapper/samtools_index"
+    shell:
+        "samtools index {params} {input[0]} {output[0]}"
+
+
+## 4. VAR CALL
+rule freebayes:
+    input:
+        ## you can have a list of samples here
+        samples = os.path.join(SORTDIR, "{sample}.sorted.bam"),
+        bai     = os.path.join(SORTDIR, "{sample}.sorted.bam.bai")
+        #samples=expand('{dir}/{sample}.sorted.bam', sample=SAMPLES, dir=SORTDIR),
+        #bai=expand('{dir}/{sample}.sorted.bam.bai', sample=SAMPLES, dir=SORTDIR)
+    output:
+        os.path.join(VARDIR, "{sample}.vcf")
+    log:
+        os.path.join(LOGDIR, "freebayes/{sample}.log")
+    benchmark:
+        os.path.join(BENCHMARKDIR,"{sample}.freebayes.txt")
+    params:
+        index=GENOME,
+        extra=""  ## optional parameters
+    conda:
+        "envs/freebayes.yaml"
+    #wrapper:
+    #    "file://wrapper/freebayes/wrapper.py"
+    shell:
+        "freebayes {params.extra} -f {params.index} {input.samples} > {output} 2> {log}"
+
+
+rule report:
+    input:
+        v = VARCALLTARGETS
+    output:
+        html="analyses/results/report.html"
+    log:
+        os.path.join(LOGDIR, "report.log")
+    params:
+        samples=SAMPLEFILES
+    run:
+        pwd = os.getcwd()
+        date = datetime.datetime.now()
+        configstr = '\n\n'.join(['**%s:** %s'%(k,v) for k,v in config.items()])
+        inputfiles = '\n\n'.join(SAMPLEFILES)
+        outputfiles = '\n\n'.join(VARCALLTARGETS)
+        report("""
+        ===============
+        Workflow Report
+        ===============
+
+        General information:
+        --------------------
+        **Time:** {date}
+        
+        **Working directory:** {pwd}
+        
+        {configstr}
+
+        Input filespaths:
+        -----------------
+        {inputfiles}
+
+        Output filespaths:
+        ------------------
+        {outputfiles}
+
+        Output files:
+        -------------
+        v_
+        
+        """, output.html, metadata="Sebastian Schmeier (s.schmeier@gmail.com)", **input)
+
+        
+rule clean:
+     shell:
+        "rm -rf {BASEDIR}/*"
+        
+        
