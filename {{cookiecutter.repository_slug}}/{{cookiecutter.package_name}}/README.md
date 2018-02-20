@@ -1,6 +1,7 @@
 # PROJECT: {{cookiecutter.package_name}}
-AUTHOR: {{cookiecutter.author_name}} ({{cookiecutter.author_email}})
-DATE: {{cookiecutter.date}} 
+
+- AUTHOR: {{cookiecutter.author_name}} ({{cookiecutter.author_email}})
+- DATE: {{cookiecutter.date}} 
 
 ## INSTALL
 
