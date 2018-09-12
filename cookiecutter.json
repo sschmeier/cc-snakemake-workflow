@@ -3,9 +3,8 @@
   "author_email": "s.schmeier@gmail.com",
   "git_username": "sschmeier",
   "repository_namespace": "sschmeier",
-  "repository_slug": "cookie-snakemake-workflow-example",
-  "repository_description": "An example cookie-snakemake-workflow project template",
-  "package_name": "example_package",
+  "repository_description": "A Snakemake workflow project.",
+  "package_name": "snake",
   "date": "2018",
   "version": "0.0.1",
   "copyright_holder": "Sebastian Schmeier"

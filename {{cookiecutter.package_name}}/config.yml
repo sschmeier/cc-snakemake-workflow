@@ -1,0 +1,40 @@
+# DIRS
+base: "analyses"
+results: "analyses/results"
+logs: "analyses/logs"
+benchmarks: "analyses/benchmarks"
+wrappers: "src/wrapper"
+scripts: "src/scripts"
+envs: "envs"
+
+# INPUTS
+samples:
+  dir: "data/samples"
+  # tab-separated columns: samplename [group] [OTHERCOLUMS (not parsed)...]
+  # only samples defined in this sheet will be considered.
+  # if "None": sample will be read from dir instead
+  samplesheet: "None"
+  r1: "{sample}.fastq"
+  #r1: "{sample}_R1.fastq.gz"
+  r2: "{sample}_R2.fastq.gz"
+
+# GENOME
+genome:
+  dir: "data/genome"
+  genome: "genome.fa.gz"
+  #dir: "data/GRCh38_28"
+  #genomeftp: "ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_28/GRCh38.primary_assembly.genome.fa.gz"
+  #genome: "GRCh38.primary_assembly.genome.fa.gz"
+  #gtfftp: "ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_28/gencode.v28.primary_assembly.annotation.gtf.gz"
+  #gtf: "gencode.v28.primary_assembly.annotation.gtf.gz"
+
+  
+# TOOLS
+# ...
+  
+# OUTPUT DIRS
+outputs:
+  mapping: "mapped_reads"
+  sort: "mapped_reads_sorted"
+  var: "varcalls"
+
