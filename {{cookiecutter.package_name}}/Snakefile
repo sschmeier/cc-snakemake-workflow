@@ -85,8 +85,8 @@ sys.stderr.write('{} samples to process\n'.format(NUM_SAMPLES))
 ## workflow is run.
 rule all:
      input:
-         [expand(join(VARDIR, "{sample}.vcf"), sample=SAMPLES),
-          MULTIQC]
+         [expand(join(VARDIR, "{sample}.vcf"), sample=SAMPLES)]#,
+         # MULTIQC]
 
 ## ===================================================================
 ## GET DATA
