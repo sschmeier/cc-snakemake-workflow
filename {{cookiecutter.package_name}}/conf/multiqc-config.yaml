@@ -1,0 +1,8 @@
+module_order:
+  - bwa:
+      name: 'BWA'
+      info: 'This section of the report shows BWA  mapping results.'
+      #path_filters:
+      #  - '*mapped_1stpass/*Log.final.out'
+  - samtools
+  - freebayes

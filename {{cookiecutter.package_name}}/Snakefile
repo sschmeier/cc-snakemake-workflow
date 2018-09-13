@@ -21,13 +21,15 @@ singularity: "docker://continuumio/miniconda3:4.5.4"
 configfile: "config.yml"
 
 BASEDIR       = os.path.abspath(config["base"])
-LOGDIR        = os.path.abspath(config["logdir"])
-BENCHMARKDIR  = os.path.abspath(config["benchmarkdir"])
-WRAPPERDIR    = os.path.abspath(config["wrapperdir"])
-SCRIPTDIR     = os.path.abspath(config["scriptdir"])
-ENVDIR        = os.path.abspath(config["envdir"])
+LOGDIR        = os.path.abspath(config["logs"])
+BENCHMARKDIR  = os.path.abspath(config["benchmarks"])
+WRAPPERDIR    = os.path.abspath(config["wrappers"])
+SCRIPTDIR     = os.path.abspath(config["scripts"])
+ENVDIR        = os.path.abspath(config["envs"])
+DATA          = os.path.abspath(config["data"])
+THREADS       = config["threads"]
 
-# DATA
+# GENOME
 GENOMEDIR     = os.path.abspath(config["genome"]["dir"])
 GENOMEGZ      = join(GENOMEDIR, config["genome"]["genome"])
 GENOME        = GENOMEGZ.replace(".gz", "")
@@ -39,19 +41,25 @@ GENOME        = GENOMEGZ.replace(".gz", "")
 
 # SAMPLES
 SAMPLEDIR     = os.path.abspath(config["samples"]["dir"])
-SAMPLESHEET   = os.path.abspath(config["samples"]["samplesheet"])
 R1            = config["samples"]["r1"]
 R2            = config["samples"]["r2"]
+
+# TOOLS
+# multiqc
+MULTIQC_FILE  = os.path.abspath(config["multiqc"]["configfile"])
+MULTIQC_COL   = config["multiqc"]["samplesheet_col_with_names"]
 
 # OUTPUTS
 RES           = os.path.abspath(config["results"])
 MAPPINGDIR    = join(RES, config["outputs"]["mapping"])
 SORTDIR       = join(RES, config["outputs"]["sort"])
 VARDIR        = join(RES, config["outputs"]["var"])
+MULTIQC       = join(RES, config["outputs"]["multiqc"])
 
 ##------------------------------------------
 ## SAMPLES
-if SAMPLESHEET != "None":
+if config["samples"]["samplesheet"] != "None":
+    SAMPLESHEET = os.path.abspath(config["samples"]["samplesheet"])
     ## reading samplename from samplesheet
     sys.stderr.write('Reading samples from samplesheet: "{}"\n'.format(SAMPLESHEET))
     SAMPLES = []
@@ -68,20 +76,52 @@ else:
     ## INPUT SAMPLE FILES FROM DIRECTORY
     sys.stderr.write('Reading samples directory: "{}"\n'.format(SAMPLEDIR))
     SAMPLES, = glob_wildcards(join(SAMPLEDIR, R1))
-
+    SAMPLESHEET = None
     
 NUM_SAMPLES = len(SAMPLES)
 sys.stderr.write('{} samples to process\n'.format(NUM_SAMPLES))
-
-## TARGETS
-TARGETS = expand(join(VARDIR, "{sample}.vcf"), sample=SAMPLES)
 
 ## Pseudo-rule to stae the final targets, so that the whole
 ## workflow is run.
 rule all:
      input:
-         expand(join(VARDIR, "{sample}.vcf"), sample=SAMPLES)
-        
+         [expand(join(VARDIR, "{sample}.vcf"), sample=SAMPLES),
+          MULTIQC]
+
+## ===================================================================
+## GET DATA
+## rule get_genome:
+##     input:
+##         FTP.remote(GENOMEFTP, keep_local=True)
+##     output:
+##         temp(GENOMEGZ)
+##     shell:
+##         "mv {input} {output}"
+
+## rule decompress_genome:
+##     input:
+##         GENOMEGZ
+##     output:
+##         GENOME
+##     shell:
+##         "gzip -d -c {input} > {output}"
+
+## rule get_gtf:
+##     input:
+##         FTP.remote(ANNOTATIONFTP, keep_local=True)
+##     output:
+##         temp(ANNOTATIONGZ)
+##     shell:
+##         "mv {input} {output}"
+
+## rule decompress_gtf:
+##     input:
+##         ANNOTATIONGZ
+##     output:
+##         ANNOTATION
+##     shell:
+##         "gzip -d -c {input} > {output}"
+         
 
 ## 1. MAPPING
 rule bwa_mem:
@@ -93,22 +133,21 @@ rule bwa_mem:
         join(LOGDIR, "bwa_mem/{sample}.log")
     benchmark:
         join(BENCHMARKDIR, "bwa_mem/{sample}.txt")
+    threads: THREADS
+    conda:
+        join(ENVDIR, "bwa-samtools.yaml")
     params:
         index=GENOME,
         extra=r"-R '@RG\tID:{sample}\tSM:{sample}'",
         sort="samtools",         ## Can be 'none', 'samtools' or 'picard'.
         sort_order="queryname",  ## Can be 'queryname' or 'coordinate'.
         sort_extra=""            ## Extra args for samtools/picard.
-    threads: 8
-    conda:
-        join(ENVDIR, "bwa-samtools.yaml")
     ## When using a wrapper, specify dir with wrapper.py here 
     #wrapper:
     #    "file://%s/bwa" $(WRAPPERDIR)
     ## When not using wrapper give commmand explicitly
     shell:
          "bwa mem -t {threads} {params.extra} {params.index} {input} | samtools view -Sb - > {output} 2> {log}"
-
 
 ## 2. sorting
 rule samtools_sort:
@@ -120,18 +159,16 @@ rule samtools_sort:
         join(LOGDIR, "samtools_sort/{sample}.sort.log")
     benchmark:
         join(BENCHMARKDIR, "samtools_sort/{sample}.txt")
-    params:
-        "-m 4G"
-    threads: 8
+    threads: THREADS
     conda:
         join(ENVDIR, "bwa-samtools.yaml")
+    params:
+        extra= r'-m 4G'
     #wrapper:
     #    "file://wrapper/samtools_sort"
     shell:
-        "samtools sort {params} -@ {threads} -o {output[0]} -T %s/{wildcards.sample} {input[0]}" %(SORTDIR)
+        "samtools sort {params.extra} -@ {threads} -o {output[0]} -T %s/{wildcards.sample} {input[0]}" %(SORTDIR)
         
-
-
 ## 3. INDEXING
 rule samtools_index:
     input:
@@ -142,15 +179,14 @@ rule samtools_index:
         join(LOGDIR, "samtools_index/{sample}.index.log")
     benchmark:
         join(BENCHMARKDIR, "samtools_index/{sample}.txt")
-    params:
-        ""
     conda:
         join(ENVDIR, "bwa-samtools.yaml")
+    params:
+        extra = r''
     #wrapper:
     #    "file://wrapper/samtools_index"
     shell:
-        "samtools index {params} {input[0]} {output[0]}"
-
+        "samtools index {params.extra} {input[0]} {output[0]}"
 
 ## 4. VAR CALL
 rule freebayes:
@@ -163,18 +199,52 @@ rule freebayes:
         join(LOGDIR, "freebayes/{sample}.log")
     benchmark:
         join(BENCHMARKDIR, "freebayes/{sample}.txt")
-    params:
-        index=GENOME,
-        extra=""  ## optional parameters
     conda:
         join(ENVDIR, "freebayes.yaml")
-)    #wrapper:
+    params:
+        index = GENOME,
+        extra = r''  ## optional parameters
+    #wrapper:
     #    "file://wrapper/freebayes/wrapper.py"
     shell:
         "freebayes {params.extra} -f {params.index} {input.samples} > {output} 2> {log}"
+
+# MULTIQC
+## rule mutiqc_samplenames:
+##     output:
+##         join(RES, "multiqc-samplenames.txt")
+##     params:
+##         col = MULTIQC_COL,
+##         samples = SAMPLES,
+##         sheet = SAMPLESHEET
+##     run:
+##         fout = open(output[0], 'w')
+##         fout.write("sampleid\tsamplename\n")
+##         if params.sheet:
+##             for a in csv.reader(open(input), delimiter = '\t') :
+##                 fout.write("{}\t{}\n".format(a[0], a[int(params.col)]))
+##         else:
+##             for s in params.samples:
+##                 fout.write("{}\t{}\n".format(s, s))
+
+## rule multiqc:
+##     input:
+##         #join(RES, "multiqc-samplenames.txt"),
+##         expand(join(VARDIR, "{sample}.vcf"), sample=SAMPLES),
+##         expand(join(MAPPINGDIR, "{sample}.bam"), sample=SAMPLES)
+##     output:
+##         directory(MULTIQC)
+##     log:
+##         log1 = join(LOGDIR, "multiqc.stdout"),
+##         log2 = join(LOGDIR, "multiqc.stderr")
+##     conda:
+##         join(ENVDIR, "multiqc.yaml")
+##     params:
+##         configfile = MULTIQC_FILE
+##     shell:
+##         "multiqc -f -c {params.configfile} --sample-names {input[0]} -o {output} {MAPPINGDIR} {VARDIR} > {log.log1} 2> {log.log2}"
         
 rule clean:
-     shell:
+    shell:
         "rm -rf {BASEDIR}/*"
-        
-        
+

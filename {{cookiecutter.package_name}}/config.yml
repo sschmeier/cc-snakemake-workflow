@@ -6,6 +6,10 @@ benchmarks: "analyses/benchmarks"
 wrappers: "src/wrapper"
 scripts: "src/scripts"
 envs: "envs"
+data: "data"
+
+# OTHER
+threads: 8  # general threads per job
 
 # INPUTS
 samples:
@@ -28,13 +32,18 @@ genome:
   #gtfftp: "ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_28/gencode.v28.primary_assembly.annotation.gtf.gz"
   #gtf: "gencode.v28.primary_assembly.annotation.gtf.gz"
 
-  
 # TOOLS
-# ...
-  
+# multiqc
+multiqc:
+  configfile: "conf/multiqc-config.yaml"
+  # this col will be used in addtion to col1 of the samplesheet for multiqc
+  # sample naming. NOT USED IF NO SAMPLESHEET IS USED
+  samplesheet_col_with_names: 2  
+
 # OUTPUT DIRS
 outputs:
   mapping: "mapped_reads"
   sort: "mapped_reads_sorted"
   var: "varcalls"
-
+  multiqc: "multiqc"
+  
