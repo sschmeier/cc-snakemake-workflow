@@ -45,45 +45,14 @@ Develop your workflow using the `Snakefile` file.
 
 ```bash
 # Do a dryrun of the workflow, show rules, order, and commands
-snakemake -np --use-conda
+snakemake -np --use-conda --use-singularity
 
-# Run the snakemake workflow, log time and commands 
-snakemake -Tp --use-conda --cores 4 2> run.log
+# Run the snakemake workflow and commands 
+snakemake -p --use-conda --use-singularity --cores 10 2> run.log
 
 # show a detailed summary of the produced files and used commands
 snakemake -D
 
 # To delete all created files use
 snakemake -p clean
-```
-
-## Create a conda env for a particular tool
-
-We keep the conda envs separate per tool, as to not get problems with
-dependencies of different tools. We store yaml-files in directory `envs`.
-`Snakemake` will create local conda envs when using `--use-conda` based
-on the yaml-files. To create a new yaml-file for a tool do the following:
-
-```bash
-conda env create -n freebayes python=3 freebayes
-source activate freebayes
-conda env export > envs/freebayes.yaml
-source deactivate
-conda env remove -n freebayes
-```
-
-## Updating/testing tools of a conda env
-
-If you wish to update tools in a conda environment in envs/ you need to create
-and source the env and update the packages:
-
-```bash
-# e.g.
-conda env create --name freebayes-test --file envs/freebayes.yaml
-source activate freebayes-test
-conda update --all
-# now test it, then:
-conda env export > envs/freebayes.yaml
-source deactivate
-conda env remove -n freebayes-test
 ```
