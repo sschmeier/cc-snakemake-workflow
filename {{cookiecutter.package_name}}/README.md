@@ -22,7 +22,7 @@ echo 'export PATH="~/miniconda3/bin:$PATH"' >> ~/.zshrc
 # Make env
 # this environment contains the bare base of what is required to run snakemake
 conda env create --name snakemake --file envs/snakemake.yaml
-source activate snakemake
+conda activate snakemake
 
 # Update conda and packages if you wish
 conda update conda
@@ -48,7 +48,10 @@ Develop your workflow using the `Snakefile` file.
 snakemake -np --use-conda --use-singularity
 
 # Run the snakemake workflow and commands 
-snakemake -p --use-conda --use-singularity --cores 10 2> run.log
+snakemake -p --use-conda --use-singularity --cores 10 2> logs/run.stderr > logs/run.stdout
+
+# If necessary bind more folders for singularity outside of your home
+snakemake -p --use-conda --use-singularity --cores 10 --singularity-args "--bind /mnt/disk1" 2> logs/run.stderr > logs/run.stdout
 
 # show a detailed summary of the produced files and used commands
 snakemake -D
