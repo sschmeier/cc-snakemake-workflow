@@ -1,2 +1,3 @@
-A.fastq
-B.fastq
+sample	condition
+A	A1
+B	B1

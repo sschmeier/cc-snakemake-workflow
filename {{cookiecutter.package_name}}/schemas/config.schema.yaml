@@ -1,0 +1,74 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: snakemake configuration file
+
+type: object
+
+properties:
+  base:
+    type: string
+
+  data:
+    type: string
+
+  samples:
+    type: object
+    properties:
+      dir:
+        type: string
+      r1:
+        type: string
+      r2:
+        type: string
+      samplesheet:
+        type: string
+    required:
+      - dir
+      - r1
+      - samplesheet
+
+  genome:
+    type: object
+    properties:
+      dir:
+        type: string
+      genome:
+        type: string
+    required:
+      - dir
+      - genome
+      
+  multiqc:
+    type: object
+    properties:
+      configfile:
+        type: string
+      samplesheet_col_with_names:
+        type: integer
+    required:
+      - configfile
+      - samplesheet_col_with_names
+
+  outputs:
+    type: object
+    properties:
+      mapping:
+        type: string
+      sort:
+        type: string
+      var:
+        type: string
+      multiqc:
+        type: string
+    required:
+      - mapping
+      - sort
+      - var
+      - multiqc
+
+required:
+  - base
+  - data
+  - samples
+  - genome
+  - outputs

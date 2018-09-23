@@ -1,11 +1,5 @@
 # DIRS
-base: "analyses"
-results: "analyses/results"
-logs: "analyses/logs"
-benchmarks: "analyses/benchmarks"
-wrappers: "src/wrapper"
-scripts: "src/scripts"
-envs: "envs"
+base: "analysis"
 data: "data"
 
 # OTHER
@@ -14,13 +8,13 @@ threads: 8  # general threads per job
 # INPUTS
 samples:
   dir: "data/samples"
-  # tab-separated columns: samplename [group] [OTHERCOLUMS (not parsed)...]
-  # only samples defined in this sheet will be considered.
-  # if "None": sample will be read from dir instead
-  samplesheet: "None"
   r1: "{sample}.fastq"
   #r1: "{sample}_R1.fastq.gz"
   r2: "{sample}_R2.fastq.gz"
+  # tab-separated columns: samplename, condition [OTHERCOLUMS (not parsed)...]
+  # only samples defined in this sheet will be considered.
+  # if "None": sample will be read from dir instead
+  samplesheet: "None"
 
 # GENOME
 genome:

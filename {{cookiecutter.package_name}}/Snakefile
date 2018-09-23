@@ -1,7 +1,14 @@
 ## WWORKFLOW PROJECT: {{cookiecutter.package_name}}
 ## INIT DATE: {{cookiecutter.date}}
+import pandas as pd
 import glob, os, os.path, datetime, sys, csv
-from os.path import join
+from os.path import join, abspath
+from snakemake.utils import validate, min_version
+
+## =============================================================================
+## set minimum snakemake version #####
+min_version("5.1.2")
+
 ## For data download
 from snakemake.remote.FTP import RemoteProvider as FTPRemoteProvider
 FTP = FTPRemoteProvider()
@@ -12,25 +19,30 @@ FTP = FTPRemoteProvider()
 
 ## define global Singularity image for reproducibility
 ## USE: "--use-singularity --use-conda" to run all jobs in container
-singularity: "docker://continuumio/miniconda3:4.5.4"
+singularity: "docker://continuumio/miniconda3" #":4.5.4"
 
-
+## =======================================================================
+## SET SOME DEFAULT PATH
+SCRIPTS = abspath("scripts")
+WRAPPER = abspath("wrapper")
+REPORT  = abspath("report")
+ENVS    = abspath("envs")
+SCHEMAS = abspath("schemas")
+RULES   = abspath("rules")
+             
 ## =======================================================================
 ## LOAD VARIABLES FROM CONFIGFILE
 ## different config-file can be submitted on command-line via --configfile
-configfile: "config.yml"
+configfile: "config.yaml"
+validate(config, schema=join(SCHEMAS, "config.schema.yaml"))
 
-BASEDIR       = os.path.abspath(config["base"])
-LOGDIR        = os.path.abspath(config["logs"])
-BENCHMARKDIR  = os.path.abspath(config["benchmarks"])
-WRAPPERDIR    = os.path.abspath(config["wrappers"])
-SCRIPTDIR     = os.path.abspath(config["scripts"])
-ENVDIR        = os.path.abspath(config["envs"])
-DATA          = os.path.abspath(config["data"])
+
+BASEDIR       = abspath(config["base"])
+DATA          = abspath(config["data"])
 THREADS       = config["threads"]
 
 # GENOME
-GENOMEDIR     = os.path.abspath(config["genome"]["dir"])
+GENOMEDIR     = abspath(config["genome"]["dir"])
 GENOMEGZ      = join(GENOMEDIR, config["genome"]["genome"])
 GENOME        = GENOMEGZ.replace(".gz", "")
 #GENOMEFTP     = config["genome"]["genomeftp"]
@@ -40,33 +52,37 @@ GENOME        = GENOMEGZ.replace(".gz", "")
 #ANNOTATIONBED = join(GENOMEDIR, config["genome"]["gtf"].replace(".gtf.gz", ".bed"))
 
 # SAMPLES
-SAMPLEDIR     = os.path.abspath(config["samples"]["dir"])
+SAMPLEDIR     = abspath(config["samples"]["dir"])
 R1            = config["samples"]["r1"]
 R2            = config["samples"]["r2"]
 
 # TOOLS
 # multiqc
-MULTIQC_FILE  = os.path.abspath(config["multiqc"]["configfile"])
+MULTIQC_FILE  = abspath(config["multiqc"]["configfile"])
 MULTIQC_COL   = config["multiqc"]["samplesheet_col_with_names"]
 
 # OUTPUTS
-RES           = os.path.abspath(config["results"])
+LOGDIR        = join(BASEDIR, "logs")
+BENCHMARKDIR  = join(BASEDIR, "benchmarks")
+RES           = join(BASEDIR, "results")
 MAPPINGDIR    = join(RES, config["outputs"]["mapping"])
 SORTDIR       = join(RES, config["outputs"]["sort"])
 VARDIR        = join(RES, config["outputs"]["var"])
 MULTIQC       = join(RES, config["outputs"]["multiqc"])
 
+
 ##------------------------------------------
 ## SAMPLES
 if config["samples"]["samplesheet"] != "None":
-    SAMPLESHEET = os.path.abspath(config["samples"]["samplesheet"])
+    SAMPLESHEET = abspath(config["samples"]["samplesheet"])
     ## reading samplename from samplesheet
     sys.stderr.write('Reading samples from samplesheet: "{}"\n'.format(SAMPLESHEET))
-    SAMPLES = []
-    reader = csv.reader(open(SAMPLESHEET), delimiter="\t")
-    for a in reader:
-        SAMPLES.append(a[0])
-
+    
+    ## LOAD AND CHECK SAMPLES
+    samplesheet = pd.read_table(SAMPLESHEET).set_index("sample", drop=False)
+    validate(samplesheet, schema=join(SCHEMAS, "samples.schema.yaml"))
+    
+    SAMPLES = list(samplesheet.index.values)
     # test if sample in dir
     for fname in expand(join(SAMPLEDIR, R1), sample=SAMPLES):
         if not os.path.isfile(fname):
@@ -135,7 +151,7 @@ rule bwa_mem:
         join(BENCHMARKDIR, "bwa_mem/{sample}.txt")
     threads: THREADS
     conda:
-        join(ENVDIR, "bwa-samtools.yaml")
+        join(ENVS, "bwa-samtools.yaml")
     params:
         index=GENOME,
         extra=r"-R '@RG\tID:{sample}\tSM:{sample}'",
@@ -144,8 +160,7 @@ rule bwa_mem:
         sort_extra=""            ## Extra args for samtools/picard.
     ## When using a wrapper, specify dir with wrapper.py here 
     #wrapper:
-    #    "file://%s/bwa" $(WRAPPERDIR)
-    ## When not using wrapper give commmand explicitly
+    #    join(WRAPPER, "bwa/wrapper.py")
     shell:
          "bwa mem -t {threads} {params.extra} {params.index} {input} | samtools view -Sb - > {output} 2> {log}"
 
@@ -161,11 +176,9 @@ rule samtools_sort:
         join(BENCHMARKDIR, "samtools_sort/{sample}.txt")
     threads: THREADS
     conda:
-        join(ENVDIR, "bwa-samtools.yaml")
+        join(ENVS, "bwa-samtools.yaml")
     params:
         extra= r'-m 4G'
-    #wrapper:
-    #    "file://wrapper/samtools_sort"
     shell:
         "samtools sort {params.extra} -@ {threads} -o {output[0]} -T %s/{wildcards.sample} {input[0]}" %(SORTDIR)
         
@@ -180,34 +193,17 @@ rule samtools_index:
     benchmark:
         join(BENCHMARKDIR, "samtools_index/{sample}.txt")
     conda:
-        join(ENVDIR, "bwa-samtools.yaml")
+        join(ENVS, "bwa-samtools.yaml")
     params:
         extra = r''
-    #wrapper:
-    #    "file://wrapper/samtools_index"
     shell:
         "samtools index {params.extra} {input[0]} {output[0]}"
 
+    
 ## 4. VAR CALL
-rule freebayes:
-    input:
-        samples = join(SORTDIR, "{sample}.sorted.bam"),
-        bai     = join(SORTDIR, "{sample}.sorted.bam.bai")
-    output:
-        join(VARDIR, "{sample}.vcf")
-    log:
-        join(LOGDIR, "freebayes/{sample}.log")
-    benchmark:
-        join(BENCHMARKDIR, "freebayes/{sample}.txt")
-    conda:
-        join(ENVDIR, "freebayes.yaml")
-    params:
-        index = GENOME,
-        extra = r''  ## optional parameters
-    #wrapper:
-    #    "file://wrapper/freebayes/wrapper.py"
-    shell:
-        "freebayes {params.extra} -f {params.index} {input.samples} > {output} 2> {log}"
+include: join(RULES, "freebayes.smk")
+    
+
 
 # MULTIQC
 ## rule mutiqc_samplenames:
@@ -238,7 +234,7 @@ rule freebayes:
 ##         log1 = join(LOGDIR, "multiqc.stdout"),
 ##         log2 = join(LOGDIR, "multiqc.stderr")
 ##     conda:
-##         join(ENVDIR, "multiqc.yaml")
+##         join(ENVS, "multiqc.yaml")
 ##     params:
 ##         configfile = MULTIQC_FILE
 ##     shell:
