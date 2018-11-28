@@ -1,6 +1,5 @@
 # DIRS
 base: analysis
-data: data
 
 # OTHER
 threads: 8  # general threads per job

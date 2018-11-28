@@ -29,17 +29,16 @@ REPORT  = abspath("report")
 ENVS    = abspath("envs")
 SCHEMAS = abspath("schemas")
 RULES   = abspath("rules")
-             
+
 ## =======================================================================
 ## LOAD VARIABLES FROM CONFIGFILE
 ## different config-file can be submitted on command-line via --configfile
 configfile: "config.yaml"
 validate(config, schema=join(SCHEMAS, "config.schema.yaml"))
 
+THREADS       = config["threads"]
 
 BASEDIR       = abspath(config["base"])
-DATA          = abspath(config["data"])
-THREADS       = config["threads"]
 
 # GENOME
 GENOMEDIR     = abspath(config["genome"]["dir"])
