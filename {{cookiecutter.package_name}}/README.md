@@ -23,19 +23,13 @@ echo 'export PATH="~/miniconda3/bin:$PATH"' >> ~/.zshrc
 # this environment contains the bare base of what is required to run snakemake
 conda env create --name snakemake --file envs/snakemake.yaml
 conda activate snakemake
+```
 
-# Update conda and packages if you wish
-conda update conda
-conda update --all
 
-# We are using now individual environments per task.
-# This is facilitated with snakemake --use-conda
-# A rule in the Snakefile now can contain a "conda" directive
-# which specifies the conda environemnt to use.
-# Conda environments used are stored in envs/
+## Install test data
 
-# e.g. to be able to run the example workflow, install
-conda install samtools bwa freebayes
+```bash
+git submodule update --init --recursive
 ```
 
 ## USE SNAKEMAKE

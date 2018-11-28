@@ -7,10 +7,7 @@ type: object
 properties:
   base:
     type: string
-
-  data:
-    type: string
-
+    
   samples:
     type: object
     properties:
@@ -49,26 +46,7 @@ properties:
       - configfile
       - samplesheet_col_with_names
 
-  outputs:
-    type: object
-    properties:
-      mapping:
-        type: string
-      sort:
-        type: string
-      var:
-        type: string
-      multiqc:
-        type: string
-    required:
-      - mapping
-      - sort
-      - var
-      - multiqc
-
 required:
   - base
-  - data
   - samples
   - genome
-  - outputs

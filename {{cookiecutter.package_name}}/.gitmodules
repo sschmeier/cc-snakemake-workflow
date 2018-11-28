@@ -1,0 +1,3 @@
+[submodule "ngs-test-data"]
+	path = ngs-test-data
+	url = git@gitlab.com:schmeierlab/workflows/ngs-test-data.git
