@@ -33,11 +33,4 @@ multiqc:
   # this col will be used in addtion to col1 of the samplesheet for multiqc
   # sample naming. NOT USED IF NO SAMPLESHEET IS USED
   samplesheet_col_with_names: 2  
-
-# OUTPUT DIRS
-outputs:
-  mapping: mapped_reads
-  sort: mapped_reads_sorted
-  var: varcalls
-  multiqc: multiqc
   

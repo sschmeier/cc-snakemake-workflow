@@ -65,10 +65,12 @@ MULTIQC_COL   = config["multiqc"]["samplesheet_col_with_names"]
 LOGDIR        = join(BASEDIR, "logs")
 BENCHMARKDIR  = join(BASEDIR, "benchmarks")
 RES           = join(BASEDIR, "results")
-MAPPINGDIR    = join(RES, config["outputs"]["mapping"])
-SORTDIR       = join(RES, config["outputs"]["sort"])
-VARDIR        = join(RES, config["outputs"]["var"])
-MULTIQC       = join(RES, config["outputs"]["multiqc"])
+
+## project specific outs
+MAPPINGDIR    = join(RES, "mapped_reads")
+SORTDIR       = join(RES, "mapped_reads_sorted")
+VARDIR        = join(RES, "varcalls")
+MULTIQC       = join(RES, "multiqc")
 
 
 ##------------------------------------------
