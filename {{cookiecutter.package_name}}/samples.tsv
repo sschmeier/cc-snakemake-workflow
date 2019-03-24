@@ -1,0 +1,5 @@
+sample,condition,pairs,fq1,fq2
+a1.chr21,A,P1,ngs-test-data/reads/a1.chr21.1.fq,ngs-test-data/reads/a1.chr21.2.fq
+b1.chr21,B,P2,ngs-test-data/reads/b1.chr21.1.fq,ngs-test-data/reads/b1.chr21.2.fq
+a2.chr21,A,P1,ngs-test-data/reads/a2.chr21.1.fq,
+b2.chr21,B,P2,ngs-test-data/reads/b2.chr21.1.fq,ngs-test-data/reads/b2.chr21.2.fq

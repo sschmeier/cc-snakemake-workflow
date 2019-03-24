@@ -3,7 +3,7 @@
 - AUTHOR: {{cookiecutter.author_name}} ({{cookiecutter.author_email}})
 - DATE: {{cookiecutter.date}} 
 
-## INSTALL
+## Installation
 
 
 ```bash
@@ -15,24 +15,18 @@ bash Miniconda3-latest-Linux-x86_64.sh
 curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 bash Miniconda3-latest-MacOSX-x86_64.sh
 
-# Add conda dir to PATH
-echo 'export PATH="~/miniconda3/bin:$PATH"' >> ~/.bashrc
-echo 'export PATH="~/miniconda3/bin:$PATH"' >> ~/.zshrc
-
-# Make env
-# this environment contains the bare base of what is required to run snakemake
-conda env create --name snakemake --file envs/snakemake.yaml
-conda activate snakemake
+# Install snakemake
+conda install snakemake>5.4.0
 ```
 
 
 ## Install test data
 
 ```bash
-git submodule update --init --recursive
+git clone https://gitlab.com/schmeierlab/workflows/ngs-test-data.git
 ```
 
-## USE SNAKEMAKE
+## Snakemake
 
 Develop your workflow using the `Snakefile` file. 
 

@@ -1,19 +1,19 @@
 rule freebayes:
     input:
-        samples = join(SORTDIR, "{sample}.sorted.bam"),
-        bai     = join(SORTDIR, "{sample}.sorted.bam.bai")
+        samples = join(DIR_RES, "02_sorted/{sample}.sorted.bam"),
+        bai     = join(DIR_RES, "02_sorted/{sample}.sorted.bam.bai")
     output:
-        join(VARDIR, "{sample}.vcf")
+        join(DIR_RES, "03_varcalls/{sample}.vcf")
     log:
-        join(LOGDIR, "freebayes/{sample}.log")
+        join(DIR_LOGS, "freebayes/{sample}.log")
     benchmark:
-        join(BENCHMARKDIR, "freebayes/{sample}.txt")
+        join(DIR_BENCHMARKS, "freebayes/{sample}.txt")
     conda:
-        join(ENVS, "freebayes.yaml")
+        join(DIR_ENVS, "freebayes.yaml")
     params:
         index = GENOME,
-        extra = r''  ## optional parameters
+        extra = config["extra"]["freebayes"]  ## optional parameters
     #wrapper:
-    #    join(WRAPPER, "freebayes/wrapper.py")
+    #    join(DIR_WRAPPER, "freebayes/wrapper.py")
     shell:
         "freebayes {params.extra} -f {params.index} {input.samples} > {output} 2> {log}"

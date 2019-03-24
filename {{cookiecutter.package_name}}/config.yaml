@@ -1,31 +1,23 @@
-base: analysis
-threads: 8  # general threads per job
+resultdir: analysis
+
+# If the workflow is run with the singularity option use this image.
+singularity: "docker://continuumio/miniconda3"
 
 # INPUTS
-samples:
-  dir: ngs-test-data/reads
-  r1: {sample}.1.fq
-  r2: {sample}.2.fq
-  # tab-separated columns: samplename, condition [OTHERCOLUMS (not parsed)...]
-  # only samples defined in this sheet will be considered.
-  # if None: sample will be read from dir instead
-  #samplesheet: samples.txt
-  samplesheet: None
+# tab-separated 4/5 columns:
+# samplename<tab>condition<tab>pairs<tab>fq1[<tab>fq2]
+# pairs column is only used if diffexp: paired: below == yes
+# if pairs should be used, set the same str for any "paired" samples
+samples: samples.tsv
 
 # GENOME
-genome:
-  dir: ngs-test-data/ref/genome
-  genome: genome.chr21.fa
-  #genomeftp: ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_28/GRCh38.primary_assembly.genome.fa.gz
-  #genome: GRCh38.primary_assembly.genome.fa.gz
-  #gtfftp: ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_28/gencode.v28.primary_assembly.annotation.gtf.gz
-  #gtf: gencode.v28.primary_assembly.annotation.gtf.gz
+ref:
+  index: ngs-test-data/ref/genome/genome.chr21.fa
+  annotation: ngs-test-data/ref/annotation.chr21.gtf
+ 
 
-# TOOLS
-# multiqc
-multiqc:
-  configfile: conf/multiqc-config.yaml
-  # this col will be used in addtion to col1 of the samplesheet for multiqc
-  # sample naming. NOT USED IF NO SAMPLESHEET IS USED
-  samplesheet_col_with_names: 2  
-  
+extra:
+  bwa_mem: "-R '@RG\tID:{sample}\tSM:{sample}'"
+  samtools_sort:  "-m 4G"
+  samtools_index: ""
+  freebayes: ""

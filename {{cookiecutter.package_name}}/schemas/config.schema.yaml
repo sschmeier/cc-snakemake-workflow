@@ -5,48 +5,40 @@ description: snakemake configuration file
 type: object
 
 properties:
-  base:
+  resultdir:
     type: string
     
+  singularity:
+    type: string
+
   samples:
-    type: object
-    properties:
-      dir:
-        type: string
-      r1:
-        type: string
-      r2:
-        type: string
-      samplesheet:
-        type: string
-    required:
-      - dir
-      - r1
-      - samplesheet
+    type: string
 
-  genome:
+  ref:
     type: object
     properties:
-      dir:
+      index:
         type: string
-      genome:
+      annotation:
         type: string
     required:
-      - dir
-      - genome
+      - index
+      - annotation
+
+  extra:
+    type: object
+    properties:
+      bwa_mem:
+        type: string
+      samtools_sort:
+        type: string
+      samtools_index:
+        type: string
+      freebayes:
+        type: string
       
-  multiqc:
-    type: object
-    properties:
-      configfile:
-        type: string
-      samplesheet_col_with_names:
-        type: integer
-    required:
-      - configfile
-      - samplesheet_col_with_names
-
+ 
 required:
-  - base
+  - resultdir
   - samples
-  - genome
+  - ref

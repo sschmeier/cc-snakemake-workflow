@@ -1,11 +1,11 @@
 {
   "author_name": "Sebastian Schmeier",
-  "author_email": "s.schmeier@gmail.com",
-  "git_username": "sschmeier",
-  "repository_namespace": "sschmeier",
+  "author_email": "schmeier@tuta.io",
+  "git_username": "s-schmeier",
+  "repository_namespace": "s-schmeier",
   "repository_description": "A Snakemake workflow project.",
-  "package_name": "snake",
-  "date": "2018",
+  "package_name": "workflow",
+  "date": "2019",
   "version": "0.0.1",
   "copyright_holder": "Sebastian Schmeier"
 }

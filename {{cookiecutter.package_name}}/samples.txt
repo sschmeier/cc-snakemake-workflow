@@ -1,3 +1,0 @@
-sample	condition
-a.chr21	A
-b.chr21	B
