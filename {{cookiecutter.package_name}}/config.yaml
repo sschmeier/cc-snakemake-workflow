@@ -8,7 +8,7 @@ singularity: "docker://continuumio/miniconda3"
 # samplename<tab>condition<tab>pairs<tab>fq1[<tab>fq2]
 # pairs column is only used if diffexp: paired: below == yes
 # if pairs should be used, set the same str for any "paired" samples
-samples: samples.tsv
+samples: samples.txt
 
 # GENOME
 ref:
