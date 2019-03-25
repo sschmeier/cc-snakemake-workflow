@@ -10,3 +10,14 @@ conda install cookiecutter
 
 cookiecutter https://github.com/sschmeier/cookie-snakemake-workflow.git
 ```
+
+
+## Configure for yourself
+
+Once used, the tempalte is stored locally in ``.cookicutters``. 
+You can edit the ``cookiecutter.json`` file to set your defaults.
+Subsequently you can create a new workflow with:
+
+```bash
+cookiecutter cookie-snakemake-workflow
+```
