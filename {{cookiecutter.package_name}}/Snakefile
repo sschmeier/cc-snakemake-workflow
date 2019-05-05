@@ -30,8 +30,11 @@ DIR_SCHEMAS = abspath("schemas")
 DIR_RULES   = abspath("rules")
 
 ## LOAD VARIABLES FROM CONFIGFILE
-## different config-file can be submitted on command-line via --configfile
-configfile: "config.yaml"
+## submit on command-line via --configfile
+if config=={}:
+    print('Please submit config-file with "--configfile <file>". Exit.')
+    sys.exit(1)
+
 validate(config, schema=join(DIR_SCHEMAS, "config.schema.yaml"))
 
 DIR_BASE       = abspath(config["resultdir"])
