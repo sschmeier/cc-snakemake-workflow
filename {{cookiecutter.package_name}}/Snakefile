@@ -13,9 +13,13 @@ min_version("5.1.2")
 ## =============================================================================
 ## SETUP
 ## =============================================================================
+## LOAD VARIABLES FROM CONFIGFILE
+## submit on command-line via --configfile
+if config=={}:
+    print('Please submit config-file with "--configfile <file>". Exit.')
+    sys.exit(1)
 
-
-configfile: "config.yaml"  # default, overwrite with --configfile
+validate(config, schema=join(DIR_SCHEMAS, "config.schema.yaml"))
 
 ## define global Singularity image for reproducibility
 ## USE: "--use-singularity --use-conda" to run all jobs in container
@@ -28,14 +32,6 @@ DIR_REPORT  = abspath("report")
 DIR_ENVS    = abspath("envs")
 DIR_SCHEMAS = abspath("schemas")
 DIR_RULES   = abspath("rules")
-
-## LOAD VARIABLES FROM CONFIGFILE
-## submit on command-line via --configfile
-if config=={}:
-    print('Please submit config-file with "--configfile <file>". Exit.')
-    sys.exit(1)
-
-validate(config, schema=join(DIR_SCHEMAS, "config.schema.yaml"))
 
 DIR_BASE       = abspath(config["resultdir"])
 DIR_LOGS       = join(DIR_BASE, "logs")
