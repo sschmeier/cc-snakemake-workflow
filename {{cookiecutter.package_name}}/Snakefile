@@ -13,31 +13,35 @@ min_version("5.1.2")
 ## =============================================================================
 ## SETUP
 ## =============================================================================
-## LOAD VARIABLES FROM CONFIGFILE
-## submit on command-line via --configfile
-if config=={}:
-    print('Please submit config-file with "--configfile <file>". Exit.')
-    sys.exit(1)
-
-validate(config, schema=join(DIR_SCHEMAS, "config.schema.yaml"))
-
-## define global Singularity image for reproducibility
-## USE: "--use-singularity --use-conda" to run all jobs in container
-singularity: config["singularity"] 
 
 ## SET SOME DEFAULT PATH
 DIR_SCRIPTS = abspath("scripts")
 DIR_WRAPPER = abspath("wrapper")
 DIR_REPORT  = abspath("report")
 DIR_ENVS    = abspath("envs")
-DIR_SCHEMAS = abspath("schemas")
 DIR_RULES   = abspath("rules")
+DIR_SCHEMAS = abspath("schemas")
 
+## LOAD VARIABLES FROM CONFIGFILE
+## submit on command-line via --configfile
+if config=={}:
+    print('Please submit config-file with "--configfile <file>". Exit.')
+    sys.exit(1)
+
+## Validate configfile with yaml-schema
+validate(config, schema=join(DIR_SCHEMAS, "config.schema.yaml"))
+
+## define global Singularity image for reproducibility
+## USE: "--use-singularity --use-conda" to run all jobs in container
+singularity: config["singularity"] 
+
+## Setup result dirs
 DIR_BASE       = abspath(config["resultdir"])
 DIR_LOGS       = join(DIR_BASE, "logs")
 DIR_BENCHMARKS = join(DIR_BASE, "benchmarks")
 DIR_RES        = join(DIR_BASE, "results")
 
+## Workflow specific setup
 # GENOME
 GENOME        = abspath(config["ref"]["index"])
 ANNOTATION    = abspath(config["ref"]["annotation"])
@@ -50,7 +54,7 @@ validate(samples, schema=join(DIR_SCHEMAS, "samples.schema.yaml"))
 ## reading samplename from samplesheet
 sys.stderr.write('Reading samples from samplesheet: "{}" ...\n'.format(config["samples"]))
 
-# test if sample in dir
+## test if sample in dir
 for fname in samples["fq1"]:
     if not os.path.isfile(fname):
         sys.stderr.write("File '{}' from samplesheet can not be found. Make sure the file exists. Exit\n".format(fname))
@@ -66,12 +70,14 @@ for fname in samples["fq2"]:
 NUM_SAMPLES = len(samples["sample"])
 sys.stderr.write('{} samples to process\n'.format(NUM_SAMPLES))
 
+
 ## =============================================================================
 ## SETUP FINAL TARGETS
 ## =============================================================================
 
 TARGETS = expand(join(DIR_RES, "03_varcalls/{sample}.vcf"), sample=samples["sample"])
 #print(TARGETS)
+
 
 ## =============================================================================
 ## FUNCTIONS
