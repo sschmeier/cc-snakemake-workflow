@@ -30,6 +30,11 @@ if config=={}:
 
 ## Validate configfile with yaml-schema
 validate(config, schema=join(DIR_SCHEMAS, "config.schema.yaml"))
+sys.stderr.write("********** Submitted config: **********\n")
+for k,v in config.items():
+    sys.stderr.write("{}: {}\n".format(k,v))
+sys.stderr.write("***************************************\n")
+
 
 ## define global Singularity image for reproducibility
 ## USE: "--use-singularity --use-conda" to run all jobs in container
