@@ -15,8 +15,12 @@ bash Miniconda3-latest-Linux-x86_64.sh
 curl -O https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 bash Miniconda3-latest-MacOSX-x86_64.sh
 
+# update conda base
+conda update -n base conda
+
 # Install snakemake
-conda install snakemake>5.4.0
+conda create -n snakemake  snakemake>={{cookiecutter.version}}
+conda activate snakemake
 ```
 
 
