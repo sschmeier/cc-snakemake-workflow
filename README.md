@@ -14,7 +14,7 @@ cookiecutter https://github.com/sschmeier/cookie-snakemake-workflow.git
 
 ## Configure for yourself
 
-Once used, the template is stored locally in ``~/.cookicutters``. 
+Once used, the template is stored locally in ``~/.cookiecutters``. 
 You can edit the ``cookiecutter.json`` file to set your defaults.
 Subsequently you can create a new workflow with:
 
