@@ -19,7 +19,7 @@ bash Miniconda3-latest-MacOSX-x86_64.sh
 conda update -n base conda
 
 # Install snakemake
-conda create -n snakemake  snakemake>={{cookiecutter.version}}
+conda create -n snakemake snakemake>={{cookiecutter.snakemake_version}}
 conda activate snakemake
 ```
 
@@ -46,11 +46,9 @@ Change `config.yaml` accordingly.
 # Do a dryrun of the workflow, show rules, order, and commands
 snakemake -np --configfile config.yaml
 
-# Run the snakemake workflow and commands via conda and singularity 
-snakemake -p --use-conda --use-singularity --cores 10 --configfile config.yaml 2> logs/run.stderr > logs/run.stdout
-
+# Run the snakemake workflow and commands via conda and/or singularity 
 # If necessary bind more folders for singularity outside of your home
-snakemake -p --use-conda --use-singularity --cores 10 --singularity-args "--bind /mnt/disk1" --configfile config.yaml 2> logs/run.stderr > logs/run.stdout
+snakemake -p --use-conda --use-singularity --cores 32 --singularity-args "--bind /mnt/disk1" --configfile config.yaml 2> logs/run.log 
 
 # show a detailed summary of the produced files and used commands
 snakemake -D
