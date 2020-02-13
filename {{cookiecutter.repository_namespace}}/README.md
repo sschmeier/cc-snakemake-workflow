@@ -1,7 +1,12 @@
-# PROJECT: {{cookiecutter.package_name}}
+# PROJECT: {{cookiecutter.repository_namespace}}
+
+[![Snakemake](https://img.shields.io/badge/snakemake-≥{{cookiecutter.min_snakemake_version}}-brightgreen.svg)](https://snakemake.bitbucket.io)
+[![Build Status](https://travis-ci.org/{{cookiecutter.git_username}}/{{cookiecutter.repository_namespace}}.svg?branch=master)](https://travis-ci.org/{{cookiecutter.git_username}}/{{cookiecutter.repository_namespace}})
+
 
 - AUTHOR: {{cookiecutter.author_name}} ({{cookiecutter.author_email}})
 - DATE: {{cookiecutter.date}} 
+- VERSION: {{cookiecutter.version}}
 
 ## Installation
 
@@ -19,7 +24,7 @@ bash Miniconda3-latest-MacOSX-x86_64.sh
 conda update -n base conda
 
 # Install snakemake
-conda create -n snakemake snakemake>={{cookiecutter.snakemake_version}}
+conda create -n snakemake snakemake>={{cookiecutter.min_snakemake_version}}
 conda activate snakemake
 ```
 
