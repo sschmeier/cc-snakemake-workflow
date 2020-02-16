@@ -1,5 +1,5 @@
-DIR: src/wrapper
-AUTHOR: {{cookiecutter.author_name}} ({{cookiecutter.author_name}})
+DIR: wrapper
+AUTHOR: {{cookiecutter.author_name}} ({{cookiecutter.author_email}})
 # Wrapper
 
 For information on available wrappers see [here](https://bitbucket.org/snakemake/snakemake-wrappers).

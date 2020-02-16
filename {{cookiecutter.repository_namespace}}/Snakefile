@@ -2,27 +2,17 @@
 ## WORKFLOW PROJECT: {{cookiecutter.repository_namespace}}
 ## INIT DATE: {{cookiecutter.date}}
 import pandas as pd
-import glob, os, odatetime, sys, csv, logging
+import glob, os, datetime, sys, csv, logging
 from os.path import join, abspath, isfile
 from snakemake.utils import validate, min_version
 
-# set up logging
-logger = logging.getLogger()
-logging.basicConfig(
-    level=10,  # minimum level to print, debug = 10, info = 20
-    format="%(asctime)s [%(levelname)8s] (%(filename)s:%(funcName)15s():%(lineno)4s): %(message)s ",
-    datefmt="%Y%m%d-%H:%M:%S",
-)
-logger.info("Program start.")
-sys.exit(0)
-
-## =============================================================================
-## set minimum snakemake version #####
+## ============================================================================
+## require minimum snakemake version ##
 min_version("{{cookiecutter.min_snakemake_version}}")
 
-## =============================================================================
+## ============================================================================
 ## SETUP
-## =============================================================================
+## ============================================================================
 
 ## SET SOME DEFAULT PATH
 DIR_SCRIPTS = abspath("scripts")
@@ -35,7 +25,7 @@ DIR_SCHEMAS = abspath("schemas")
 ## LOAD VARIABLES FROM CONFIGFILE
 ## submit on command-line via --configfile
 if config=={}:
-    logger.error('Please submit config-file with "--configfile <file>". Exit.')
+    sys.stderr.write('Please submit config-file with "--configfile <file>". Exit.\n')
     sys.exit(1)
 
 sys.stderr.write("********** Submitted config: **********\n")
@@ -56,57 +46,51 @@ DIR_LOGS       = join(DIR_BASE, "logs")
 DIR_BENCHMARKS = join(DIR_BASE, "benchmarks")
 DIR_RES        = join(DIR_BASE, "results")
 
+## Workflow specific setup from config ========================================
 
+example_extra = config["extra"]["example"]
 
-## Workflow specific setup from config =================================
-# GENOME
-GENOME        = abspath(config["ref"]["index"])
-ANNOTATION    = abspath(config["ref"]["annotation"])
-
-## =============================================================================
-## SAMPLES from sheet
+## ============================================================================
+## Reading samples from sheet
 samples = pd.read_csv(config["samples"], sep=",").set_index("sample", drop=False)
 # validate samplesheet
 validate(samples, schema=join(DIR_SCHEMAS, "samples.schema.yaml"))
 
 ## Testing if samples exist
 ## reading samplename from samplesheet
-logger.info('Reading samples from samplesheet: "{}" ...\n'.format(config["samples"]))
+sys.stderr.write('Reading samples from samplesheet: "{}" ...\n'.format(config["samples"]))
 for fname in samples["fq1"]:
     if not isfile(fname):
-        logger.error("File '{}' from samplesheet can not be found. Make sure the file exists. Exit\n".format(fname))
+        logger.error("File '{}' from samplesheet can not be found. Make sure the file exists. Exit.\n".format(fname))
         sys.exit(1)
     
 for fname in samples["fq2"]:
     if pd.isnull(fname):
         continue
     if not isfile(fname):
-        logger.error("File '{}' from samplesheet can not be found. Make sure the file exists. Exit\n".format(fname))
+        logger.error("File '{}' from samplesheet can not be found. Make sure the file exists. Exit.\n".format(fname))
         sys.exit(1)
 
-NUM_SAMPLES = len(samples["sample"])
-logger.info('{} samples to process\n'.format(NUM_SAMPLES))
+sys.stderr.write('{} samples to process\n'.format(len(samples["sample"])))
 
-
-## =============================================================================
-## SETUP FINAL TARGETS
-## =============================================================================
-
-TARGETS = expand(join(DIR_RES, "03_varcalls/{sample}.vcf"), sample=samples["sample"])
-#print(TARGETS)
-
-
-## =============================================================================
+## ============================================================================
 ## FUNCTIONS
-## =============================================================================
+## ============================================================================
 def get_fastq(wildcards):
     # does not return fq2 if it is not present
     return samples.loc[(wildcards.sample), ["fq1", "fq2"]].dropna()
 
+## ============================================================================
+## SETUP FINAL TARGETS
+## ============================================================================
 
-## =============================================================================
+# final files from samples
+TARGETS = expand(join(DIR_RES, "final/{sample}.txt"), sample=samples["sample"])
+#print(TARGETS)
+
+## ============================================================================
 ## RULES
-## =============================================================================
+## ============================================================================
 
 ## Pseudo-rule to state the final targets, so that the whole runs
 rule all:
@@ -114,68 +98,18 @@ rule all:
         TARGETS
 
 
-## 1. MAPPING
-rule bwa_mem:
+rule example:
     input:
         get_fastq
     output:
-        temp(join(DIR_RES, "01_aligned/{sample}.bam"))
-    log:
-        join(DIR_LOGS, "bwa_mem/{sample}.log")
-    benchmark:
-        join(DIR_BENCHMARKS, "bwa_mem/{sample}.txt")
-    threads: 4
-    conda:
-        join(DIR_ENVS, "bwa-samtools.yaml")
-    params:
-        index=GENOME,
-        extra=config["extra"]["bwa_mem"],
-    ## When using a wrapper, specify dir with wrapper.py here 
-    #wrapper:
-    #    join(DIR_WRAPPER, "bwa/wrapper.py")
-    shell:
-         "bwa mem {params.extra} -t {threads} {params.index} {input} | samtools view -Sb - > {output} 2> {log}"
+        touch(join(DIR_RES, "final/{sample}.txt"))
 
-## 2. sorting
-rule samtools_sort:
-    input:
-        join(DIR_RES, "01_aligned/{sample}.bam")
-    output:
-        join(DIR_RES, "02_sorted/{sample}.sorted.bam")
-    log:
-        join(DIR_LOGS, "samtools_sort/{sample}.sort.log")
-    benchmark:
-        join(DIR_BENCHMARKS, "samtools_sort/{sample}.txt")
-    threads: 4
-    conda:
-        join(DIR_ENVS, "bwa-samtools.yaml")
-    params:
-        extra=config["extra"]["samtools_sort"]
-    shell:
-        "samtools sort {params.extra} -@ {threads} -o {output[0]} -T %s/{wildcards.sample} {input[0]}" %(join(DIR_RES, "02_sorted"))
-        
-## 3. INDEXING
-rule samtools_index:
-    input:
-        join(DIR_RES, "02_sorted/{sample}.sorted.bam")
-    output:
-        join(DIR_RES, "02_sorted/{sample}.sorted.bam.bai")
-    log:
-        join(DIR_LOGS, "samtools_index/{sample}.index.log")
-    benchmark:
-        join(DIR_BENCHMARKS, "samtools_index/{sample}.txt")
-    conda:
-        join(DIR_ENVS, "bwa-samtools.yaml")
-    params:
-        extra=config["extra"]["samtools_index"]
-    shell:
-        "samtools index {params.extra} {input[0]} {output[0]}"
 
-    
-## 4. VAR CALL
-include: join(DIR_RULES, "freebayes.smk")
-    
+# Include rules from other files
+# include: join(DIR_RULES, "example.smk")  
 
+# run with 
+# snakemake --configfile config.yaml clean
 rule clean:
     shell:
         "rm -rf {DIR_BASE}/*"

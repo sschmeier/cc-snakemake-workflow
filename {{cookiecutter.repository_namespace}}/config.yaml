@@ -10,14 +10,5 @@ singularity: "docker://continuumio/miniconda3"
 # if pairs should be used, set the same str for any "paired" samples
 samples: samples.txt
 
-# GENOME
-ref:
-  index: ngs-test-data/ref/genome/genome.chr21.fa
-  annotation: ngs-test-data/ref/annotation.chr21.gtf
- 
-
 extra:
-  bwa_mem: "-R '@RG\tID:{sample}\tSM:{sample}'"
-  samtools_sort:  "-m 4G"
-  samtools_index: ""
-  freebayes: ""
+  example: ""

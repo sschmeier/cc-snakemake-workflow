@@ -7,38 +7,21 @@ type: object
 properties:
   resultdir:
     type: string
-    
+
   singularity:
     type: string
 
   samples:
     type: string
 
-  ref:
-    type: object
-    properties:
-      index:
-        type: string
-      annotation:
-        type: string
-    required:
-      - index
-      - annotation
-
   extra:
     type: object
     properties:
-      bwa_mem:
+      example:
         type: string
-      samtools_sort:
-        type: string
-      samtools_index:
-        type: string
-      freebayes:
-        type: string
-      
- 
+
 required:
   - resultdir
+  - singularity
   - samples
-  - ref
+  - extra
